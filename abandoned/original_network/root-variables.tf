@@ -23,7 +23,6 @@ variable "subnets" {
   type = map(object({
     name             = string
     address_prefixes = list(string)
-    nsg_name         = string
   }))
 }
 

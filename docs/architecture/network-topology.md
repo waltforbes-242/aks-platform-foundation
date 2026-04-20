@@ -21,31 +21,31 @@ flowchart TB
     AzureCP[Azure Control Plane]
     AKSCP[AKS Control Plane (Public API)]
     
-    subgraph VNet[apf-vnet (10.77.0.0/16)]
+    subgraph VNet[apf-vnet-prod (10.77.0.0/16)]
         direction TB
 
-        subgraph Subnet1[apf-subnet-systempool1 (10.77.0.0/22)]
+        subgraph Subnet1[apf-subnet-systempool1-prod (10.77.0.0/22)]
             Node1[System Nodes]
         end
 
-        subgraph Subnet2[apf-subnet-userpool1 (10.77.4.0/22)]
+        subgraph Subnet2[apf-subnet-userpool1-prod (10.77.4.0/22)]
             Node2[User Nodes]
         end
 
-        subgraph Subnet3[apf-subnet-future1 (10.77.8.0/22)]
+        subgraph Subnet3[apf-subnet-future1-prod (10.77.8.0/22)]
             Future1[Reserved]
         end
 
-        subgraph Subnet4[apf-subnet-future2 (10.77.12.0/22)]
+        subgraph Subnet4[apf-subnet-future2-prod (10.77.12.0/22)]
             Future2[Reserved]
         end
 
-        subgraph Subnet5[apf-subnet-future3 (10.77.16.0/22)]
+        subgraph Subnet5[apf-subnet-future3-prod (10.77.16.0/22)]
             Future3[Reserved]
         end
     end
 
-    Ingress[Ingress Controller (apf-ingress)]
+    Ingress[Ingress Controller (apf-ingress-prod)]
     Pods[Workloads (Pods)]
     AzureSvc[Azure Services (ACR, Key Vault, etc.)]
 
@@ -63,20 +63,20 @@ flowchart TB
 
 ### VNet
 
-- Name: `apf-vnet`
+- Name: `apf-vnet-prod-prod`
 - CIDR: `10.77.0.0/16`
 
 ---
 
 ### Subnets (Subnet-per-Node-Pool Strategy)
 
-| Subnet Name             | CIDR          | Purpose           | Status   |
-|------------------------|---------------|------------------|----------|
-| apf-subnet-systempool1 | 10.77.0.0/22  | System node pool | Active   |
-| apf-subnet-userpool1   | 10.77.4.0/22  | User node pool   | Active   |
-| apf-subnet-future1     | 10.77.8.0/22  | Future pool      | Reserved |
-| apf-subnet-future2     | 10.77.12.0/22 | Future pool      | Reserved |
-| apf-subnet-future3     | 10.77.16.0/22 | Future pool      | Reserved |
+| Subnet Name                 | CIDR          | Purpose          | Status   |
+|-----------------------------|---------------|------------------|----------|
+| apf-subnet-systempool1-prod | 10.77.0.0/22  | System node pool | Active   |
+| apf-subnet-userpool1-prod   | 10.77.4.0/22  | User node pool   | Active   |
+| apf-subnet-future1-prod     | 10.77.8.0/22  | Future pool      | Reserved |
+| apf-subnet-future2-prod     | 10.77.12.0/22 | Future pool      | Reserved |
+| apf-subnet-future3-prod     | 10.77.16.0/22 | Future pool      | Reserved |
 
 ---
 
@@ -135,7 +135,7 @@ flowchart TB
 
 1. Client sends request from Internet  
 2. Traffic reaches public LoadBalancer  
-3. Routed to `apf-ingress` controller  
+3. Routed to `apf-ingress-prod` controller  
 4. Ingress routes to Service → Pod  
 
 ---

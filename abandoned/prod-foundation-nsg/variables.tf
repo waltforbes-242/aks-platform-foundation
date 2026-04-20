@@ -27,6 +27,21 @@ variable "subnets" {
   }))
 }
 
+variable "inbound_rules" {
+  description = "Inbound NSG rules to create on each subnet NSG."
+  type = map(object({
+    name                   = string
+    priority               = number
+    protocol               = string
+    destination_port_range = string
+  }))
+}
+
+variable "allowed_inbound_source_prefixes" {
+  description = "Allowed inbound source CIDR prefixes for NSG rules."
+  type        = list(string)
+}
+
 variable "tags" {
   description = "Tags applied to taggable resources in the production foundation environment."
   type        = map(string)

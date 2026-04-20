@@ -28,16 +28,6 @@ output "network_subnet_names" {
   value       = module.network.subnet_names
 }
 
-output "network_nsg_ids" {
-  description = "Map of production foundation NSG IDs keyed by logical subnet key."
-  value       = module.network.nsg_ids
-}
-
-output "network_nsg_names" {
-  description = "Map of production foundation NSG names keyed by logical subnet key."
-  value       = module.network.nsg_names
-}
-
 output "systempool_subnet_id" {
   description = "ID of the system node pool subnet."
   value       = module.network.systempool_subnet_id
