@@ -17,7 +17,7 @@ Key design concerns:
 - Outbound connectivity model and future control requirements
 - Clear, enforceable network security boundaries
 
-This ADR expands beyond networking model selection to include **IP addressing strategy, subnet allocation, outbound design, and NSG baseline posture**, ensuring the platform can scale without requiring disruptive re-architecture.
+This ADR expands beyond networking model selection to include **IP addressing strategy, subnet allocation, and outbound design**, ensuring the platform can scale without requiring disruptive re-architecture.
 
 ---
 
@@ -27,16 +27,13 @@ We will use **Azure CNI with Cilium (VNet-integrated pod IP model)**.
 - Pods receive IP addresses directly from the Azure VNet
 - Each node pool is assigned a **dedicated subnet (subnet-per-node-pool strategy)**
 - Subnet space is **pre-allocated for future node pools**
-- Outbound connectivity uses **default Azure SNAT**
+- Outbound connectivity uses **default SNAT**
 - **Controlled egress is explicitly deferred** to a later phase
-- Each subnet is associated with a **dedicated NSG**
-- In this phase, NSGs are created with **no custom allow/deny rules**, relying on Azure default NSG rules as the baseline posture
 
 This design prioritizes:
 - Network transparency and debuggability
 - Strong security boundaries via NetworkPolicies
 - Predictable scaling through upfront IP planning
-- A clean day-1 network baseline without premature firewall-style rule complexity
 
 ---
 
@@ -54,13 +51,13 @@ This provides sufficient address space for:
 
 ### AKS Subnet Allocation
 
-| Subnet CIDR    | Purpose          | Status   |
-|----------------|------------------|----------|
-| 10.77.0.0/22   | systempool1      | Active   |
-| 10.77.4.0/22   | userpool1        | Active   |
-| 10.77.8.0/22   | future node pool | Reserved |
-| 10.77.12.0/22  | future node pool | Reserved |
-| 10.77.16.0/22  | future node pool | Reserved |
+| Subnet CIDR       | Purpose                  | Status      |
+|------------------|--------------------------|-------------|
+| 10.77.0.0/22     | systempool1              | Active      |
+| 10.77.4.0/22     | userpool1                | Active      |
+| 10.77.8.0/22     | future node pool         | Reserved    |
+| 10.77.12.0/22    | future node pool         | Reserved    |
+| 10.77.16.0/22    | future node pool         | Reserved    |
 
 ### Design Rationale
 - Subnet-per-node-pool isolates failure domains and simplifies scaling decisions
@@ -111,6 +108,8 @@ Each `/22` subnet provides:
   - node count
   - pod density per node
 
+---
+
 ### Headroom Strategy
 - Two active subnets support current node pools
 - Three additional `/22` subnets reserved for expansion
@@ -118,8 +117,12 @@ Each `/22` subnet provides:
   - multiple additional node pools
   - approximately **600–700 additional pods**
 
+---
+
 ### Design Statement
 > The subnet layout is intentionally oversized relative to initial node count to avoid early re-addressing.
+
+---
 
 ### Explicit Capacity Envelope
 - Each subnet: ~1019 usable IPs
@@ -129,6 +132,8 @@ This design:
 - Supports current workloads comfortably
 - Supports multiple future node pools
 - Delays need for overlay networking or VNet redesign
+
+---
 
 ### Scale Risk Threshold (Redesign Trigger)
 A redesign is required when:
@@ -143,8 +148,7 @@ A redesign is required when:
 
 ### Current State
 - Outbound: **default Azure SNAT**
-- No NAT Gateway
-- No Firewall
+- No NAT Gateway or Firewall
 - No user-defined routing
 
 ### Dependencies
@@ -152,6 +156,8 @@ A redesign is required when:
 - Accessing Azure Key Vault and Azure services
 - Reaching Microsoft package endpoints
 - General application outbound internet access
+
+---
 
 ### Deferred Design
 > Controlled egress is deferred for this phase.
@@ -166,33 +172,17 @@ A redesign is required when:
 
 ## Security Model (Network Layer)
 
-### NSG Baseline Choice
-Each AKS subnet is associated with a dedicated NSG. In this phase, those NSGs are created **without custom security rules**.
-
-### Why
-This is intentional for v1:
-- avoids prematurely encoding firewall-style policy before workload traffic is understood
-- keeps the network baseline simple and reviewable
-- prevents false confidence from shallow allow/deny rules that are not yet operationally validated
-- leaves workload-to-workload traffic control to **Cilium NetworkPolicies**, which are the primary in-cluster segmentation mechanism
-
-### Current Posture
-- No direct inbound access to nodes is intentionally exposed by design
-- Ingress is expected to flow through Kubernetes-managed load balancing and ingress components
-- NSGs provide subnet attachment points for future hardening
-- Azure default NSG rules remain in effect until stricter requirements justify explicit custom rules
-
-### Deferred Hardening
-Explicit NSG rules, controlled egress, NAT Gateway, Azure Firewall, or UDR-based routing will be introduced only when justified by:
-- regulatory requirements
-- deterministic egress requirements
-- private endpoint adoption
-- multi-cluster networking complexity
+- No direct inbound access to nodes
+- Ingress via Kubernetes-managed load balancing only
+- NSG posture: **baseline deny with explicit allows**
+- NetworkPolicies enforced via Cilium
 
 This establishes:
-- clear trust boundaries
-- a simple and intentional day-1 baseline
-- future-ready attachment points for stricter controls
+- Clear trust boundaries
+- Least-privilege traffic flow
+- Separation of system and application workloads
+
+(Aligned with AKS security model principles :contentReference[oaicite:0]{index=0})
 
 ---
 
@@ -206,6 +196,8 @@ This establishes:
   - Poor alignment with Azure-native integrations
 - Rejected due to operational opacity and weaker security posture
 
+---
+
 ### Azure CNI Overlay
 - Pros:
   - Reduces VNet IP pressure
@@ -213,6 +205,8 @@ This establishes:
   - Additional abstraction layer
   - Less mature dataplane integration compared to Cilium VNet mode
 - Deferred until IP pressure justifies complexity
+
+---
 
 ### Controlled Egress (NAT Gateway / Firewall)
 - Pros:
@@ -222,16 +216,6 @@ This establishes:
   - Increased cost and operational complexity
 - Deferred to avoid premature optimization in single-cluster phase
 
-### Explicit NSG Rule Sets in Phase 1
-- Pros:
-  - More visible subnet-level control
-  - Potential early hardening value
-- Cons:
-  - Higher complexity before actual workload traffic patterns are known
-  - Risk of brittle or misleading controls
-  - Can overlap confusingly with later Kubernetes/Cilium policy enforcement
-- Deferred in favor of empty NSGs plus later targeted hardening
-
 ---
 
 ## Consequences
@@ -240,23 +224,21 @@ This establishes:
 - Requires deliberate IP planning upfront
 - Simplifies debugging due to native VNet visibility
 - Subnet-per-pool improves isolation but increases planning overhead
-- NSGs exist as enforcement points, but detailed subnet filtering is intentionally deferred
 
 ### Security
 - Strong network policy enforcement via Cilium
 - Clear ingress/egress boundaries
-- Future-ready for stricter egress control and NSG hardening
-- Avoids secret or ad hoc network configuration patterns
+- Future-ready for stricter egress control
 
 ### Cost
 - Larger CIDR allocation than minimal designs
 - Avoids future cost of re-platforming or migration
-- Defers unnecessary firewall/NAT costs in the first phase
 
 ### Complexity
 - Higher conceptual complexity than Kubenet
 - Offset by improved observability and control
-- Keeps day-1 NSG handling intentionally simple
+
+---
 
 ### Design Review Justification
 This design passes review because:
@@ -264,7 +246,6 @@ This design passes review because:
 - Subnet growth strategy is defined upfront
 - IP exhaustion risk is quantified and mitigated
 - Outbound model is intentional, not accidental
-- NSG posture is explicit and consistent with implementation
 - Redesign triggers are clearly defined
 
 ---
@@ -280,6 +261,5 @@ This ADR must be revisited if any of the following occur:
 - Controlled egress becomes mandatory
 - Pod density requirements change
 - Regulatory or security requirements increase
-- Explicit subnet-level filtering becomes operationally necessary
 
 ---

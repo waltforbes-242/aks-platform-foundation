@@ -45,7 +45,7 @@ flowchart TB
         end
     end
 
-    Future Ingress[Ingress Controller (apf-ingress-prod)]
+    Ingress[Ingress Controller (apf-ingress-prod)]
     Pods[Workloads (Pods)]
     AzureSvc[Azure Services (ACR, Key Vault, etc.)]
 
@@ -58,12 +58,12 @@ flowchart TB
     AKSCP --> Node1
     AzureCP --> AKSCP
 ```
-
+	
 ## 3) Address Space and Subnet Mapping
 
 ### VNet
 
-- Name: `apf-vnet-prod`
+- Name: `apf-vnet-prod-prod`
 - CIDR: `10.77.0.0/16`
 
 ---
@@ -109,7 +109,7 @@ flowchart TB
 ### Boundary 3 — Node Subnets (Data Plane)
 
 - Subnet-per-node-pool isolation
-- NSG: one per subnet; no custom allow/deny rules, relying on Azure default NSG rules as the baseline posture
+- NSG: one per subnet; **no custom allow/deny rules**, relying on Azure default NSG rules as the baseline posture
 - No direct inbound access
 
 ---
@@ -142,8 +142,8 @@ flowchart TB
 
 ### Characteristics
 
-- No direct node exposure  
-- All ingress is mediated through Kubernetes primitives  
+- No direct node exposure
+- All ingress is mediated through Kubernetes primitives
 
 ---
 
@@ -151,27 +151,27 @@ flowchart TB
 
 ### Flow: Pod → Pod
 
-- Uses native VNet IP routing (no overlay)  
-- No NAT within cluster  
+- Uses native VNet IP routing (no overlay)
+- No NAT within cluster
 
 ---
 
 ### Enforcement
 
-- Cilium NetworkPolicies  
-- Deny-by-default baseline (recommended)  
+- Cilium NetworkPolicies
+- Deny-by-default baseline (recommended)
 
 ---
 
 ### Namespace Isolation
 
-- `team-<name>-dev`  
-- `team-<name>-prod`  
+- `team-<name>-dev`
+- `team-<name>-prod`
 
 Isolation enforced via:
 
-- Kubernetes RBAC  
-- NetworkPolicies  
+- Kubernetes RBAC
+- NetworkPolicies
 
 ---
 
@@ -188,19 +188,19 @@ Isolation enforced via:
 
 ### Current Model
 
-- Default SNAT  
-- No NAT Gateway  
-- No Firewall  
-- No UDR  
+- Default SNAT
+- No NAT Gateway
+- No Firewall
+- No UDR
 
 ---
 
 ### Dependencies
 
-- ACR  
-- Azure Key Vault  
-- Microsoft endpoints  
-- External APIs  
+- ACR
+- Azure Key Vault
+- Microsoft endpoints
+- External APIs
 
 ---
 
@@ -208,40 +208,42 @@ Isolation enforced via:
 
 ### Controlled Egress
 
-- Not implemented  
-- No deterministic outbound IP  
+- Not implemented
+- No deterministic outbound IP
 
 ---
 
 ### Private AKS
 
-- Not implemented  
-- API server remains public  
+- Not implemented
+- API server remains public
 
 ---
 
 ### Advanced Routing
 
-- No UDR  
-- No forced tunneling  
+- No UDR
+- No forced tunneling
 
 ---
 
 ### Future Triggers
 
-- Regulatory requirements  
-- Deterministic egress needs  
-- Multi-cluster topology  
-- FQDN filtering requirements  
+- Regulatory requirements
+- Deterministic egress needs
+- Multi-cluster topology
+- FQDN filtering requirements
 
 ---
 
 ## 9) Security Posture (Network Layer)
 
-- No inbound access directly to nodes  
-- Ingress only via ingress controller  
-- NSGs are attached per subnet but currently rely on Azure default NSG rules, with no custom Phase 1 rules  
-- NetworkPolicies enforce least-privilege communication inside the cluster  
+- No inbound access directly to nodes
+- Ingress only via ingress controller
+- NSG enforces:
+  - baseline deny
+  - explicit allow rules
+- NetworkPolicies enforce least-privilege communication
 
 ---
 
@@ -251,9 +253,9 @@ Isolation enforced via:
 
 Native VNet IPs simplify:
 
-- Packet tracing  
-- NSG debugging  
-- Flow analysis  
+- Packet tracing
+- NSG debugging
+- Flow analysis
 
 ---
 
@@ -261,15 +263,15 @@ Native VNet IPs simplify:
 
 Subnet-per-node-pool enables:
 
-- Independent scaling  
-- Isolation of workloads  
+- Independent scaling
+- Isolation of workloads
 
 ---
 
 ### Failure Domains
 
-- System and user workloads isolated at subnet level  
-- Future node pools can be added without redesign  
+- System and user workloads isolated at subnet level
+- Future node pools can be added without redesign
 
 ---
 
@@ -277,17 +279,15 @@ Subnet-per-node-pool enables:
 
 This topology implements:
 
-- Azure CNI (VNet-integrated pods)  
-- Subnet-per-node-pool strategy  
-- Pre-allocated CIDR ranges  
-- Default SNAT outbound model  
-- Dedicated NSGs per subnet with no custom Phase 1 rules  
+- Azure CNI (VNet-integrated pods)
+- Subnet-per-node-pool strategy
+- Pre-allocated CIDR ranges
+- Default SNAT outbound model
 
 ---
 
 ### Refer to ADR-001 for:
 
-- Design rationale  
-- Capacity planning  
-- Redesign triggers  
-- NSG baseline posture  
+- Design rationale
+- Capacity planning
+- Redesign triggers

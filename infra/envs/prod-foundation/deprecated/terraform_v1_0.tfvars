@@ -1,5 +1,5 @@
 resource_group_name = "apf-rg-prod"
-location            = "eastus"
+location            = "East US"
 
 vnet_name          = "apf-vnet-prod"
 vnet_address_space = ["10.77.0.0/16"]
@@ -35,18 +35,6 @@ subnets = {
     nsg_name         = "apf-nsg-future3-prod"
   }
 }
-
-acr_name                          = "apfacrprod01"
-acr_sku                           = "Standard"
-acr_admin_enabled                 = false
-acr_public_network_access_enabled = true
-acr_identity_type                 = null
-acr_network_rule_bypass_option    = "AzureServices"
-
-log_analytics_workspace_name    = "apf-law-prod"
-log_analytics_workspace_sku     = "PerGB2018"
-log_analytics_retention_in_days = 30
-monitor_workspace_name          = "apf-amw-prod"
 
 tags = {
   project     = "aks-platform-foundation"

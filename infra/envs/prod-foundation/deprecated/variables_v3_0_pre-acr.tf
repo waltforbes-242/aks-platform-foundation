@@ -1,5 +1,5 @@
 variable "resource_group_name" {
-  description = "Name of the resource group that contains the VNet, subnets, and NSGs."
+  description = "Name of the resource group for the production foundation environment."
   type        = string
 
   validation {
@@ -9,7 +9,7 @@ variable "resource_group_name" {
 }
 
 variable "location" {
-  description = "Azure region for the network resources."
+  description = "Azure region for the production foundation environment."
   type        = string
 
   validation {
@@ -19,7 +19,7 @@ variable "location" {
 }
 
 variable "vnet_name" {
-  description = "Name of the virtual network."
+  description = "Name of the virtual network for the production foundation environment."
   type        = string
 
   validation {
@@ -29,7 +29,7 @@ variable "vnet_name" {
 }
 
 variable "vnet_address_space" {
-  description = "Address space for the virtual network."
+  description = "Address space for the production foundation virtual network."
   type        = list(string)
 
   validation {
@@ -43,15 +43,10 @@ variable "vnet_address_space" {
     ])
     error_message = "Every value in vnet_address_space must be a valid CIDR block."
   }
-
-  validation {
-    condition     = length(distinct(var.vnet_address_space)) == length(var.vnet_address_space)
-    error_message = "vnet_address_space must not contain duplicate CIDR blocks."
-  }
 }
 
 variable "subnets" {
-  description = "Map of subnet definitions to create in the VNet."
+  description = "Map of subnet definitions for the production foundation virtual network."
   type = map(object({
     name             = string
     address_prefixes = list(string)
@@ -68,26 +63,16 @@ variable "subnets" {
 
   validation {
     condition = alltrue([
-      for subnet in values(var.subnets) :
-      trimspace(subnet.name) != ""
+      for subnet in values(var.subnets) : trimspace(subnet.name) != ""
     ])
     error_message = "Each subnet.name must not be empty."
   }
 
   validation {
     condition = alltrue([
-      for subnet in values(var.subnets) :
-      trimspace(subnet.nsg_name) != ""
+      for subnet in values(var.subnets) : trimspace(subnet.nsg_name) != ""
     ])
     error_message = "Each subnet.nsg_name must not be empty."
-  }
-
-  validation {
-    condition = alltrue([
-      for subnet in values(var.subnets) :
-      length(subnet.address_prefixes) > 0
-    ])
-    error_message = "Each subnet must define at least one address prefix."
   }
 
   validation {
@@ -98,33 +83,18 @@ variable "subnets" {
     ]))
     error_message = "Every subnet address prefix must be a valid CIDR block."
   }
-
-  validation {
-    condition = length(distinct([
-      for subnet in values(var.subnets) : subnet.name
-    ])) == length(values(var.subnets))
-    error_message = "Each subnet.name must be unique."
-  }
-
-  validation {
-    condition = length(distinct([
-      for subnet in values(var.subnets) : subnet.nsg_name
-    ])) == length(values(var.subnets))
-    error_message = "Each subnet.nsg_name must be unique."
-  }
-
-  validation {
-    condition = length(distinct(flatten([
-      for subnet in values(var.subnets) : subnet.address_prefixes
-      ]))) == length(flatten([
-      for subnet in values(var.subnets) : subnet.address_prefixes
-    ]))
-    error_message = "Subnet address prefixes must be unique across all subnets in this module."
-  }
 }
 
 variable "tags" {
-  description = "Tags to apply to taggable resources."
+  description = "Tags applied to taggable resources in the production foundation environment."
   type        = map(string)
-  default     = {}
+
+  validation {
+    condition = (
+      contains(keys(var.tags), "project") &&
+      contains(keys(var.tags), "environment") &&
+      contains(keys(var.tags), "owner")
+    )
+    error_message = "tags must include at least: project, environment, and owner."
+  }
 }

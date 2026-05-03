@@ -43,15 +43,3 @@ module "acr" {
   network_rule_bypass_option    = var.acr_network_rule_bypass_option
   tags                          = var.tags
 }
-
-module "monitoring" {
-  source = "../../modules/monitoring"
-
-  resource_group_name             = azurerm_resource_group.this.name
-  location                        = var.location
-  log_analytics_workspace_name    = var.log_analytics_workspace_name
-  log_analytics_workspace_sku     = var.log_analytics_workspace_sku
-  log_analytics_retention_in_days = var.log_analytics_retention_in_days
-  monitor_workspace_name          = var.monitor_workspace_name
-  tags                            = var.tags
-}

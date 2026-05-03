@@ -43,11 +43,6 @@ acr_public_network_access_enabled = true
 acr_identity_type                 = null
 acr_network_rule_bypass_option    = "AzureServices"
 
-log_analytics_workspace_name    = "apf-law-prod"
-log_analytics_workspace_sku     = "PerGB2018"
-log_analytics_retention_in_days = 30
-monitor_workspace_name          = "apf-amw-prod"
-
 tags = {
   project     = "aks-platform-foundation"
   environment = "prod"

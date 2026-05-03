@@ -3,7 +3,7 @@ variable "resource_group_name" {
   type        = string
 
   validation {
-    condition     = trimspace(var.resource_group_name) != ""
+    condition     = trim(var.resource_group_name) != ""
     error_message = "resource_group_name must not be empty."
   }
 }
@@ -13,7 +13,7 @@ variable "location" {
   type        = string
 
   validation {
-    condition     = trimspace(var.location) != ""
+    condition     = trim(var.location) != ""
     error_message = "location must not be empty."
   }
 }
@@ -23,7 +23,7 @@ variable "vnet_name" {
   type        = string
 
   validation {
-    condition     = trimspace(var.vnet_name) != ""
+    condition     = trim(var.vnet_name) != ""
     error_message = "vnet_name must not be empty."
   }
 }
@@ -69,7 +69,7 @@ variable "subnets" {
   validation {
     condition = alltrue([
       for subnet in values(var.subnets) :
-      trimspace(subnet.name) != ""
+      trim(subnet.name) != ""
     ])
     error_message = "Each subnet.name must not be empty."
   }
@@ -77,7 +77,7 @@ variable "subnets" {
   validation {
     condition = alltrue([
       for subnet in values(var.subnets) :
-      trimspace(subnet.nsg_name) != ""
+      trim(subnet.nsg_name) != ""
     ])
     error_message = "Each subnet.nsg_name must not be empty."
   }
