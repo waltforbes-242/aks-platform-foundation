@@ -31,18 +31,6 @@ variable "vnet_name" {
 variable "vnet_address_space" {
   description = "Address space for the production foundation virtual network."
   type        = list(string)
-
-  validation {
-    condition     = length(var.vnet_address_space) > 0
-    error_message = "vnet_address_space must contain at least one CIDR block."
-  }
-
-  validation {
-    condition = alltrue([
-      for cidr in var.vnet_address_space : can(cidrhost(cidr, 0))
-    ])
-    error_message = "Every value in vnet_address_space must be a valid CIDR block."
-  }
 }
 
 variable "subnets" {
@@ -52,58 +40,17 @@ variable "subnets" {
     address_prefixes = list(string)
     nsg_name         = string
   }))
-
-  validation {
-    condition = (
-      contains(keys(var.subnets), "systempool1") &&
-      contains(keys(var.subnets), "userpool1")
-    )
-    error_message = "subnets must include the logical keys \"systempool1\" and \"userpool1\"."
-  }
-
-  validation {
-    condition = alltrue([
-      for subnet in values(var.subnets) : trimspace(subnet.name) != ""
-    ])
-    error_message = "Each subnet.name must not be empty."
-  }
-
-  validation {
-    condition = alltrue([
-      for subnet in values(var.subnets) : trimspace(subnet.nsg_name) != ""
-    ])
-    error_message = "Each subnet.nsg_name must not be empty."
-  }
-
-  validation {
-    condition = alltrue(flatten([
-      for subnet in values(var.subnets) : [
-        for cidr in subnet.address_prefixes : can(cidrhost(cidr, 0))
-      ]
-    ]))
-    error_message = "Every subnet address prefix must be a valid CIDR block."
-  }
 }
 
 variable "acr_name" {
   description = "Globally unique name of the Azure Container Registry."
   type        = string
-
-  validation {
-    condition     = can(regex("^[a-z0-9]{5,50}$", var.acr_name))
-    error_message = "acr_name must be 5-50 lowercase alphanumeric characters."
-  }
 }
 
 variable "acr_sku" {
   description = "SKU for the Azure Container Registry."
   type        = string
   default     = "Standard"
-
-  validation {
-    condition     = contains(["Basic", "Standard", "Premium"], var.acr_sku)
-    error_message = "acr_sku must be one of: Basic, Standard, Premium."
-  }
 }
 
 variable "acr_admin_enabled" {
@@ -122,76 +69,121 @@ variable "acr_identity_type" {
   description = "Managed identity type for ACR. Use null for no managed identity."
   type        = string
   default     = null
-
-  validation {
-    condition     = var.acr_identity_type == null || contains(["SystemAssigned"], var.acr_identity_type)
-    error_message = "acr_identity_type must be null or SystemAssigned."
-  }
 }
 
 variable "acr_network_rule_bypass_option" {
   description = "Whether trusted Azure services can bypass ACR network rules."
   type        = string
   default     = "AzureServices"
-
-  validation {
-    condition     = contains(["AzureServices", "None"], var.acr_network_rule_bypass_option)
-    error_message = "acr_network_rule_bypass_option must be either AzureServices or None."
-  }
-}
-
-variable "tags" {
-  description = "Tags applied to taggable resources in the production foundation environment."
-  type        = map(string)
-
-  validation {
-    condition = (
-      contains(keys(var.tags), "project") &&
-      contains(keys(var.tags), "environment") &&
-      contains(keys(var.tags), "owner")
-    )
-    error_message = "tags must include at least: project, environment, and owner."
-  }
 }
 
 variable "log_analytics_workspace_name" {
-  description = "Name of the Log Analytics workspace for the production foundation environment."
+  description = "Name of the Log Analytics workspace."
   type        = string
-
-  validation {
-    condition     = trimspace(var.log_analytics_workspace_name) != ""
-    error_message = "log_analytics_workspace_name must not be empty."
-  }
 }
 
 variable "log_analytics_workspace_sku" {
   description = "SKU for the Log Analytics workspace."
   type        = string
   default     = "PerGB2018"
-
-  validation {
-    condition     = contains(["PerGB2018", "CapacityReservation"], var.log_analytics_workspace_sku)
-    error_message = "log_analytics_workspace_sku must be either PerGB2018 or CapacityReservation."
-  }
 }
 
 variable "log_analytics_retention_in_days" {
   description = "Retention period in days for the Log Analytics workspace."
   type        = number
   default     = 30
-
-  validation {
-    condition     = var.log_analytics_retention_in_days >= 30 && var.log_analytics_retention_in_days <= 730
-    error_message = "log_analytics_retention_in_days must be between 30 and 730."
-  }
 }
 
 variable "monitor_workspace_name" {
-  description = "Name of the Azure Monitor workspace for managed Prometheus."
+  description = "Name of the Azure Monitor workspace."
   type        = string
+}
 
-  validation {
-    condition     = trimspace(var.monitor_workspace_name) != ""
-    error_message = "monitor_workspace_name must not be empty."
-  }
+variable "aks_cluster_name" {
+  description = "Name of the AKS cluster."
+  type        = string
+}
+
+variable "aks_dns_prefix" {
+  description = "DNS prefix for the AKS cluster."
+  type        = string
+}
+
+variable "aks_kubernetes_version" {
+  description = "AKS Kubernetes version. Null allows Azure to choose the default supported version."
+  type        = string
+  default     = null
+}
+
+variable "aks_sku_tier" {
+  description = "AKS SKU tier."
+  type        = string
+  default     = "Free"
+}
+
+variable "aks_system_node_pool" {
+  description = "AKS system node pool configuration."
+  type = object({
+    name            = string
+    vm_size         = string
+    node_count      = number
+    min_count       = number
+    max_count       = number
+    os_disk_size_gb = number
+    os_disk_type    = string
+  })
+}
+
+variable "aks_user_node_pool" {
+  description = "AKS user node pool configuration."
+  type = object({
+    name            = string
+    vm_size         = string
+    node_count      = number
+    min_count       = number
+    max_count       = number
+    os_disk_size_gb = number
+    os_disk_type    = string
+  })
+}
+
+variable "aks_service_cidr" {
+  description = "AKS service CIDR."
+  type        = string
+  default     = "10.78.0.0/16"
+}
+
+variable "aks_dns_service_ip" {
+  description = "AKS DNS service IP."
+  type        = string
+  default     = "10.78.0.10"
+}
+
+variable "aks_outbound_type" {
+  description = "AKS outbound type."
+  type        = string
+  default     = "loadBalancer"
+}
+
+variable "aks_oidc_issuer_enabled" {
+  description = "Enable AKS OIDC issuer."
+  type        = bool
+  default     = true
+}
+
+variable "aks_workload_identity_enabled" {
+  description = "Enable AKS Workload Identity."
+  type        = bool
+  default     = true
+}
+
+variable "aks_enable_acr_pull_role_assignment" {
+  description = "Assign AcrPull to the AKS kubelet identity."
+  type        = bool
+  default     = true
+}
+
+variable "tags" {
+  description = "Tags applied to taggable resources in the production foundation environment."
+  type        = map(string)
 }

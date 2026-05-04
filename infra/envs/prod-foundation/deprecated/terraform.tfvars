@@ -48,38 +48,6 @@ log_analytics_workspace_sku     = "PerGB2018"
 log_analytics_retention_in_days = 30
 monitor_workspace_name          = "apf-amw-prod"
 
-aks_cluster_name       = "apf-aks-prod"
-aks_dns_prefix         = "apf-aks-prod"
-aks_kubernetes_version = null
-aks_sku_tier           = "Free"
-
-aks_system_node_pool = {
-  name            = "systempool1"
-  vm_size         = "Standard_D2s_v3"
-  node_count      = 2
-  min_count       = 2
-  max_count       = 4
-  os_disk_size_gb = 64
-  os_disk_type    = "Managed"
-}
-
-aks_user_node_pool = {
-  name            = "userpool1"
-  vm_size         = "Standard_B2s"
-  node_count      = 2
-  min_count       = 2
-  max_count       = 3
-  os_disk_size_gb = 64
-  os_disk_type    = "Managed"
-}
-
-aks_service_cidr                    = "10.78.0.0/16"
-aks_dns_service_ip                  = "10.78.0.10"
-aks_outbound_type                   = "loadBalancer"
-aks_oidc_issuer_enabled             = true
-aks_workload_identity_enabled       = true
-aks_enable_acr_pull_role_assignment = true
-
 tags = {
   project     = "aks-platform-foundation"
   environment = "prod"
