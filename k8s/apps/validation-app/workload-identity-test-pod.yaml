@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wi-kv-test
+  namespace: apps
+  labels:
+    azure.workload.identity/use: "true"
+spec:
+  serviceAccountName: wi-keyvault-reader
+  nodeSelector:
+    nodepool-role: user
+  restartPolicy: Never
+  containers:
+    - name: azure-cli
+      image: mcr.microsoft.com/azure-cli:latest
+      command: ["sleep", "3600"]

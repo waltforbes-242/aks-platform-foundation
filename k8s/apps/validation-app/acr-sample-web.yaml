@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acr-sample-web
+  namespace: apps
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: acr-sample-web
+  template:
+    metadata:
+      labels:
+        app: acr-sample-web
+    spec:
+      nodeSelector:
+        nodepool-role: user
+      containers:
+        - name: sample-web
+          image: apfacrprod01.azurecr.io/sample-web:v1
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acr-sample-web
+  namespace: apps
+spec:
+  type: ClusterIP
+  selector:
+    app: acr-sample-web
+  ports:
+    - port: 80
+      targetPort: 80

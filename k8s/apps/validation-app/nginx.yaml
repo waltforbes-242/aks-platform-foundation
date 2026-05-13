@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: validation-nginx
+  namespace: apps
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: validation-nginx
+  template:
+    metadata:
+      labels:
+        app: validation-nginx
+    spec:
+      nodeSelector:
+        nodepool-role: user
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: validation-nginx
+  namespace: apps
+spec:
+  type: ClusterIP
+  selector:
+    app: validation-nginx
+  ports:
+    - port: 80
+      targetPort: 80
